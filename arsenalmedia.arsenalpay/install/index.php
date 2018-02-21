@@ -23,6 +23,10 @@ class arsenalmedia_arsenalpay extends CModule {
 	var $errors;
 
 	function arsenalmedia_arsenalpay() {
+		$this->MODULE_ID = 'arsenalmedia.arsenalpay';
+		$this->PARTNER_NAME = "Arsenal Media";
+		$this->PARTNER_URI = "https://arsenalpay.ru";
+	
 		$arModuleVersion = array();
 
 		include __DIR__ . "/version.php";
