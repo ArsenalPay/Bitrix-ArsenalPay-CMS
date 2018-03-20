@@ -3,10 +3,10 @@ global $MESS;
 
 $MESS["AM_TITLE"]                    = "ArsenalPay";
 $MESS["AM_GROUP_NAME"]               = "Настройки подключения ArsenalPay";
-$MESS['AM_CALLBACK_URL']             = 'Callback url*';
-$MESS['AM_CALLBACK_KEY']             = 'Callback key*';
-$MESS['AM_WIDGET_KEY']               = 'Widget key*';
-$MESS['AM_WIDGET_ID']                = 'Widget ID*';
+$MESS['AM_CALLBACK_URL']             = 'Callback Url *';
+$MESS['AM_CALLBACK_KEY']             = 'callbackKey *';
+$MESS['AM_WIDGET_KEY']               = 'widgetKey *';
+$MESS['AM_WIDGET_ID']                = 'widget *';
 $MESS['AM_CHANGE_STATUS']            = 'Смена статуса заказа';
 $MESS['AM_CHANGE_STATUS_DESCR']      = 'Менять статус заказа при смене статуса оплаты (Y/N)';
 $MESS['AM_USER_ID']                  = 'Номер пользователя*';
