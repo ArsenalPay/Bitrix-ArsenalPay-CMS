@@ -1,8 +1,11 @@
 <?
 global $MESS;
 
+/** @var CUpdater $updater */
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+
 
 
 if (IsModuleInstalled('arsenalmedia.arsenalpay')) {
@@ -11,6 +14,9 @@ if (IsModuleInstalled('arsenalmedia.arsenalpay')) {
 	}
 	if (is_dir(dirname(__FILE__) . '/install/sale_payment')) {
 		$updater->CopyFiles("install/sale_payment", "php_interface/include/sale_payment");
+	}
+	if (is_dir(dirname(__FILE__) . '/install/images')){
+		$updater->CopyFiles("install/images", "images/sale/sale_payments");
 	}
 
 	Loader::includeModule("sale");

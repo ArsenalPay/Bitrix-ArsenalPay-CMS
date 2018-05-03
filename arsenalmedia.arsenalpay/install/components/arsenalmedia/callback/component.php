@@ -21,7 +21,7 @@ $strLog         .= json_encode($callbackParams, JSON_UNESCAPED_UNICODE);
 logf($strLog);
 
 if (!checkParams($callbackParams)) {
-	exitf("ERR");
+	exitf("ERR", $callbackParams);
 }
 
 //take requred data
@@ -39,23 +39,22 @@ if ($orderId > 0) {
 	}
 }
 if (!$order || !$payment) {
-	$callbackParams['FUNCTION'] == 'check' ? exitf('NO') : exitf('ERR');
+	$callbackParams['FUNCTION'] == 'check' ? exitf('NO', $callbackParams) : exitf('ERR', $callbackParams);
 }
 /** @var \Bitrix\Sale\PaySystem\Service $service */
 $service = PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
-$params  = $service->getParamsBusValue($payment);
-if (!array_key_exists('CALLBACK_KEY', $params) || strlen($params['CALLBACK_KEY']) == 0) {
-	$callbackParams['FUNCTION'] == 'check' ? exitf('NO') : exitf('ERR');
+$paymentParams  = $service->getParamsBusValue($payment);
+if (!array_key_exists('CALLBACK_KEY', $paymentParams) || strlen($paymentParams['CALLBACK_KEY']) == 0) {
+	$callbackParams['FUNCTION'] == 'check' ? exitf('NO', $callbackParams) : exitf('ERR', $callbackParams);
 }
-$KEY = $params['CALLBACK_KEY'];
 
-if (!checkSign($callbackParams, $KEY)) {
+if (!checkSign($callbackParams, $paymentParams['CALLBACK_KEY'])) {
 	logf("ERROR Sign is invalid");
-	exitf("ERR");
+	exitf("ERR", $callbackParams);
 }
 
 //put params into vars
-$changeStatus     = $params['CHANGE_STATUS'] == 'Y' ? true : false;
+$changeStatus     = $paymentParams['CHANGE_STATUS'] == 'Y' ? true : false;
 $currency         = "RUB";
 $shouldPay        = $payment->getSum();
 $arsenalPaidSum   = $payment->getSumPaid();
@@ -76,7 +75,7 @@ if ($callbackParams['FUNCTION'] == 'reversal') {
 
 if (!checkPaymentStatus($oldStatusPayment, $callbackParams['FUNCTION'])) {
 	logf("Error payment status: cant change '{$oldStatusPayment}' to '{$callbackParams['FUNCTION']}'");
-	$callbackParams['FUNCTION'] == 'check' ? exitf('NO') : exitf('ERR');
+	$callbackParams['FUNCTION'] == 'check' ? exitf('NO', $callbackParams) : exitf('ERR', $callbackParams);
 }
 
 if ($callbackParams['FUNCTION'] == "check") {
@@ -84,10 +83,18 @@ if ($callbackParams['FUNCTION'] == "check") {
 	                   ($callbackParams['MERCH_TYPE'] == 1 && $shouldPay >= $callbackParams['AMOUNT'] && $shouldPay == $callbackParams['AMOUNT_FULL']);
 
 	if (!$isCorrectAmount || $order->isCanceled() || $isArsenalPaid) {
-		exitf("NO");
+		exitf("NO", $callbackParams);
 	}
 	else {
-		exitf("YES");
+		$fiscal = array();
+		if (isset($callbackParams['OFD']) && $callbackParams['OFD'] == 1) {
+			$fiscal = prepareFiscal($order, $paymentParams, $callbackParams);
+			if (!$fiscal) {
+				logf('Can`t prepare fiscal document');
+				exitf("ERR", $callbackParams);
+			}
+		}
+		exitf("YES", $callbackParams, $fiscal);
 	}
 }
 elseif ($callbackParams['FUNCTION'] == "payment") {
@@ -96,7 +103,7 @@ elseif ($callbackParams['FUNCTION'] == "payment") {
 
 	if (!$isCorrectAmount) {
 		logf("Error amount");
-		exitf("ERR");
+		exitf("ERR", $callbackParams);
 	}
 
 	$payInfo = array(
@@ -113,13 +120,13 @@ elseif ($callbackParams['FUNCTION'] == "payment") {
 	$result = $order->save();
 	if (!$result->isSuccess()) {
 		logf("Error during save order status");
-		exitf('ERR');
+		exitf('ERR', $callbackParams);
 	}
 	else {
 		if ($changeStatus && $order->isPaid()) {
 			changeStatus($order, "P");
 		}
-		exitf('OK');
+		exitf('OK', $callbackParams);
 	}
 }
 elseif ($callbackParams['FUNCTION'] == "reverse") {
@@ -128,11 +135,11 @@ elseif ($callbackParams['FUNCTION'] == "reverse") {
 
 	if (!$isArsenalPaid) {
 		logf("Error: Order was not paid!");
-		exitf("ERR");
+		exitf("ERR", $callbackParams);
 	}
 	elseif (!$isCorrectAmount) {
 		logf("Error amount");
-		exitf("ERR");
+		exitf("ERR", $callbackParams);
 	}
 
 	$payInfo = array(
@@ -150,11 +157,11 @@ elseif ($callbackParams['FUNCTION'] == "reverse") {
 	$result = $order->save();
 	if (!$result->isSuccess()) {
 		logf("Error during save order status");
-		exitf('ERR');
+		exitf('ERR', $callbackParams);
 	}
 	else {
 		logf("For order#{$orderId} reverse");
-		exitf('OK');
+		exitf('OK', $callbackParams);
 	}
 }
 elseif ($callbackParams['FUNCTION'] == 'refund') {
@@ -163,7 +170,7 @@ elseif ($callbackParams['FUNCTION'] == 'refund') {
 
 	if (!$isCorrectAmount) {
 		logf("Error amount");
-		exitf("ERR");
+		exitf("ERR", $callbackParams);
 	}
 	$diff          = DoubleVal($arsenalPaidSum - DoubleVal($callbackParams['AMOUNT']));
 	$isFirstRefund = intval($payment->getField('PS_STATUS_CODE')) == 1 ? false : true;
@@ -182,7 +189,7 @@ elseif ($callbackParams['FUNCTION'] == 'refund') {
 	$result = $order->save();
 	if (!$result->isSuccess()) {
 		logf("Error during save order status");
-		exitf('ERR');
+		exitf('ERR', $callbackParams);
 	}
 	else {
 		if ($isFirstRefund) {
@@ -202,13 +209,13 @@ elseif ($callbackParams['FUNCTION'] == 'refund') {
 			logf("Failed transaction for user#{$userId} on sum={$diff}");
 		}
 		logf("For order#{$orderId} refund {$callbackParams['AMOUNT']}");
-		exitf('OK');
+		exitf('OK', $callbackParams);
 	}
 }
 elseif ($callbackParams['FUNCTION'] == 'cancel') {
 	if ($isArsenalPaid) {
 		logf(Loc::getMessage("AM_ORDER_WAS_PAID_FAIL"));
-		exitf('ERR');
+		exitf('ERR', $callbackParams);
 	}
 	$payInfo = array(
 		"PAID"                  => "N",
@@ -225,11 +232,11 @@ elseif ($callbackParams['FUNCTION'] == 'cancel') {
 	$result = $order->save();
 	if (!$result->isSuccess()) {
 		logf("Error during save order status");
-		exitf('ERR');
+		exitf('ERR', $callbackParams);
 	}
 	else {
 		logf("Cancel for order#{$orderId}");
-		exitf('OK');
+		exitf('OK', $callbackParams);
 	}
 }
 elseif ($callbackParams['FUNCTION'] == "hold") {
@@ -238,11 +245,11 @@ elseif ($callbackParams['FUNCTION'] == "hold") {
 
 	if (!$isCorrectAmount) {
 		logf("Error amount");
-		exitf("ERR");
+		exitf("ERR", $callbackParams);
 	}
 	elseif ($isArsenalPaid) {
 		logf(Loc::getMessage("AM_ORDER_WAS_PAID_FAIL"));
-		exitf('ERR');
+		exitf('ERR', $callbackParams);
 	}
 	$payInfo = array(
 		"PAID"                  => "N",
@@ -258,16 +265,138 @@ elseif ($callbackParams['FUNCTION'] == "hold") {
 	$result = $order->save();
 	if (!$result->isSuccess()) {
 		logf("Error during save order status");
-		exitf('ERR');
+		exitf('ERR', $callbackParams);
 	}
 	else {
 		changeStatus($order, "AH");
 		logf("Hold {$callbackParams['AMOUNT']} for order #{$orderId}");
-		exitf('OK');
+		exitf('OK', $callbackParams);
 	}
 }
 
-function exitf($msg) {
+function prepareFiscal($order, $paymentParams, $callbackParams) {
+	if (!$order) {
+		return array();
+	}
+
+	$CDBResult = CUser::GetByID($order->getUserId());
+	$user      = $CDBResult->fetch();
+	$email     = $user['EMAIL'];
+	$phone     = $user['PERSONAL_PHONE'] ? $user['PERSONAL_PHONE'] : $user['WORK_PHONE'];
+	$basket    = $order->getBasket();
+
+
+	$fiscal = array(
+		"id"      => $callbackParams['ID'],
+		"type"    => "sell",
+		"receipt" => [
+			"attributes" => [
+				"email" => $email
+			],
+			"items"      => array(),
+		]
+
+	);
+
+	if ($phone) {
+		$fiscal['receipt']['attributes']['phone'] = $phone;
+	}
+
+	$items = $basket->getBasketItems();
+
+	/**
+	 * @var $item Bitrix\Sale\BasketItem
+	 */
+	foreach ($items as $item) {
+		$fiscalItem = array(
+			"name"     => $item->getField('NAME'),
+			"price"    => $item->getPrice(),
+			"quantity" => $item->getQuantity(),
+			"sum"      => $item->getFinalPrice(),
+
+		);
+		if (ToUpper(SITE_CHARSET) != "UTF-8") {
+			$fiscalItem['name'] = iconv('cp1251', 'utf-8', $fiscalItem['name']);
+		}
+		$query = CCatalogProduct::GetList(array(), array('ID' => $item->getProductId()));
+		$res   = $query->Fetch();
+
+		$itemVatId = $res ? (int) $res['VAT_ID'] : false;
+
+		$itemVat = getArsenalpayVatByVatId($itemVatId, $paymentParams);
+		if (is_string($itemVat) && strlen($itemVat) > 0) {
+			$fiscalItem['tax'] = $itemVat;
+		}
+
+		if (isset($callbackParams['product_tax']) && strlen($callbackParams['product_tax']) > 0) {
+			$fiscalItem['tax'] = $callbackParams['product_tax'];
+		}
+
+		$fiscal['receipt']['items'][] = $fiscalItem;
+	}
+
+	$deliveryId = $order->getField('DELIVERY_ID');
+	if ($deliveryId > 0) {
+		$delivery      = Sale\Delivery\Services\Manager::getById($deliveryId);
+		$deliveryName  = $delivery['NAME'];
+		$deliveryVatId = $delivery['VAT_ID'];
+		if (ToUpper(SITE_CHARSET) != "UTF-8") {
+			$deliveryName = iconv('cp1251', 'utf-8', $deliveryName);
+		}
+		$deliveryPrice = $order->getDeliveryPrice();
+
+		$deliveryItem = array(
+			"name"     => $deliveryName,
+			"price"    => $deliveryPrice,
+			"quantity" => 1,
+			"sum"      => $deliveryPrice,
+		);
+
+
+		$deliveryVat = getArsenalpayVatByVatId($deliveryVatId, $paymentParams);
+		if (is_string($deliveryVat) && strlen($deliveryVat) > 0) {
+			$deliveryItem['tax'] = $deliveryVat;
+		}
+		$fiscal['receipt']['items'][] = $deliveryItem;
+	}
+
+	return $fiscal;
+}
+
+function getArsenalpayVatByVatId($vatId, $paymentParams) {
+	$paramName = "CATALOG_VAT_" . $vatId;
+	if (isset($paymentParams[$paramName]) && strlen($paramName) > 0) {
+		return $paymentParams[$paramName];
+	} else if (isset($paymentParams['DEFAULT_TAX']) && strlen($paymentParams['DEFAULT_TAX']) >0) {
+		return $paymentParams['DEFAULT_TAX'];
+	}
+	return false;
+}
+
+function preparePhone($phone) {
+	$phone = preg_replace('/[^0-9]/', '', $phone);
+	if (strlen($phone) < 10) {
+		return false;
+	}
+	if (strlen($phone) == 10) {
+		return $phone;
+	}
+	if (strlen($phone) == 11) {
+		return substr($phone, 1);
+	}
+
+	return false;
+
+}
+
+function exitf($msg, $callbackParams, $fiscal = array()) {
+	if (isset($callbackParams['FORMAT']) && $callbackParams['FORMAT'] == 'json') {
+		$msg = array("response" => $msg);
+		if ($fiscal && isset($callbackParams['OFD']) && $callbackParams['OFD'] == 1) {
+			$msg['ofd'] = $fiscal;
+		}
+		$msg = json_encode($msg);
+	}
 	logf($msg);
 	echo $msg;
 	exit;
@@ -296,7 +425,7 @@ function checkPaymentStatus($oldStatus = '', $newStatus) {
 	$checks['check2hold']    = ($oldStatus == 'check' && $newStatus == 'hold');
 	$checks['check2payment'] = ($oldStatus == 'check' && $newStatus == 'payment');
 
-	$checks['hold2cancel'] = ($oldStatus == 'hold' && $newStatus == 'cancel');
+	$checks['hold2cancel']  = ($oldStatus == 'hold' && $newStatus == 'cancel');
 	$checks['hold2payment'] = ($oldStatus == 'hold' && $newStatus == 'payment');
 
 	$checks['payment2reverse'] = ($oldStatus == 'payment' && $newStatus == 'reverse');
