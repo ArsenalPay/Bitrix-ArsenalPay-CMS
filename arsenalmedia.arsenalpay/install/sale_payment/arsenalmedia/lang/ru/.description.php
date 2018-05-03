@@ -26,6 +26,7 @@ $MESS['AM_PAYMENT_TAX_DEFAULT_DESCR'] = 'Выбранная налоговая �
 
 $MESS['AM_PAYMENT_TAX_TEMPLATE_NAME'] = '';
 $MESS['AM_PAYMENT_TAX_GENERAL_DESCR'] = '';
+$MESS['AM_OFD_GROUP_NAME'] = 'Настройки подключения к онлайн кассе';
 
 $MESS['AM_TAX_NONE']   = 'Без НДС';
 $MESS['AM_TAX_VAT0']   = 'НДС по ставке 0%';

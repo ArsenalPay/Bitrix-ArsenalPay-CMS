@@ -101,7 +101,7 @@ $data        = array(
 			'NAME'        => Loc::getMessage('AM_PAYMENT_TAX_DEFAULT_NAME'),
 			'DESCRIPTION' => Loc::getMessage('AM_PAYMENT_TAX_DEFAULT_DESCR'),
 			'SORT'        => 2000,
-			'GROUP'       => 'TAXES',
+			'GROUP'       => Loc::getMessage('AM_OFD_GROUP_NAME'),
 			'INPUT'       => array(
 				'TYPE'    => 'ENUM',
 				'OPTIONS' => $vatOptions
@@ -121,7 +121,7 @@ if (CModule::IncludeModule('catalog')) {
 			'NAME'        => Loc::getMessage('AM_PAYMENT_TAX_TEMPLATE_NAME') . $shopVat['NAME'],
 			'DESCRIPTION' => Loc::getMessage('AM_PAYMENT_TAX_GENERAL_DESCR'),
 			'SORT'        => 2700 + $shopVat['SORT'],
-			'GROUP'       => 'TAXES',
+			'GROUP'       => Loc::getMessage('AM_OFD_GROUP_NAME'),
 			'INPUT'       => array(
 				'TYPE'    => 'ENUM',
 				'OPTIONS' => $vatOptions
