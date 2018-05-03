@@ -44,6 +44,7 @@ class arsenalmedia_arsenalpay extends CModule {
 		CopyDirFiles(Loader::getDocumentRoot() . '/bitrix/modules/' . $this->MODULE_ID . '/install/components', Loader::getDocumentRoot() . "/bitrix/components", true, true);
 		CopyDirFiles(Loader::getDocumentRoot() . '/bitrix/modules/' . $this->MODULE_ID . '/install/sale_payment', Loader::getDocumentRoot() . "/bitrix/php_interface/include/sale_payment", true, true);
 		CopyDirFiles(Loader::getDocumentRoot() . '/bitrix/modules/' . $this->MODULE_ID . '/install/files', Loader::getDocumentRoot(), true, true);
+		CopyDirFiles(Loader::getDocumentRoot() . '/bitrix/modules/' . $this->MODULE_ID . '/install/images', Loader::getDocumentRoot() . "/bitrix/images/sale/sale_payments", true, true);
 
 		return true;
 	}
