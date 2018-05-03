@@ -42,8 +42,8 @@ if (!$order || !$payment) {
 	$callbackParams['FUNCTION'] == 'check' ? exitf('NO', $callbackParams) : exitf('ERR', $callbackParams);
 }
 /** @var \Bitrix\Sale\PaySystem\Service $service */
-$service = PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
-$paymentParams  = $service->getParamsBusValue($payment);
+$service       = PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
+$paymentParams = $service->getParamsBusValue($payment);
 if (!array_key_exists('CALLBACK_KEY', $paymentParams) || strlen($paymentParams['CALLBACK_KEY']) == 0) {
 	$callbackParams['FUNCTION'] == 'check' ? exitf('NO', $callbackParams) : exitf('ERR', $callbackParams);
 }
@@ -279,12 +279,30 @@ function prepareFiscal($order, $paymentParams, $callbackParams) {
 		return array();
 	}
 
-	$CDBResult = CUser::GetByID($order->getUserId());
-	$user      = $CDBResult->fetch();
-	$email     = $user['EMAIL'];
-	$phone     = $user['PERSONAL_PHONE'] ? $user['PERSONAL_PHONE'] : $user['WORK_PHONE'];
-	$basket    = $order->getBasket();
+	$basket  = $order->getBasket();
 
+	/**
+	 * Getting order properties for email and phone
+	 */
+	$CDBUser = CUser::GetByID($order->getUserId());
+	$user    = $CDBUser->fetch();
+	$phone = false;
+	$email = false;
+	$CDBprops = CSaleOrderPropsValue::GetOrderProps($order->getId());
+	while ($row = $CDBprops->fetch()) {
+		if ($row['IS_EMAIL'] == 'Y' && check_email($row['VALUE'])) {
+			$email = $row['VALUE'];
+		}
+		else if (isset($row['CODE']) && $row['CODE'] == 'PHONE') {
+			$phone = $row['VALUE'];
+		}
+	}
+	if (!$phone) {
+		$phone = $user['PERSONAL_PHONE'] ? $user['PERSONAL_PHONE'] : $user['WORK_PHONE'];
+	}
+	if (!$email) {
+		$email = $user['email'];
+	}
 
 	$fiscal = array(
 		"id"      => $callbackParams['ID'],
@@ -298,7 +316,7 @@ function prepareFiscal($order, $paymentParams, $callbackParams) {
 
 	);
 
-	if ($phone) {
+	if ($phone = preparePhone($phone)) {
 		$fiscal['receipt']['attributes']['phone'] = $phone;
 	}
 
@@ -367,9 +385,11 @@ function getArsenalpayVatByVatId($vatId, $paymentParams) {
 	$paramName = "CATALOG_VAT_" . $vatId;
 	if (isset($paymentParams[$paramName]) && strlen($paramName) > 0) {
 		return $paymentParams[$paramName];
-	} else if (isset($paymentParams['DEFAULT_TAX']) && strlen($paymentParams['DEFAULT_TAX']) >0) {
+	}
+	else if (isset($paymentParams['DEFAULT_TAX']) && strlen($paymentParams['DEFAULT_TAX']) > 0) {
 		return $paymentParams['DEFAULT_TAX'];
 	}
+
 	return false;
 }
 
