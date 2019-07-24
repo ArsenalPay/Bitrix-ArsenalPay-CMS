@@ -15,6 +15,14 @@ $nonce       = md5(microtime(true) . mt_rand(100000, 999999));
 $sign_data   = "$user_id;$destination;$amount;$widget_id;$nonce";
 $widget_sign = hash_hmac('sha256', $sign_data, $widget_key);
 ?>
+<!doctype html>
+<html lang="ru">
+<head>
+ <meta charset="utf-8">
+ <title>Title</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+</head>
+<body>
 <style>
     .sale_order_full_table {
         width: 100%;
@@ -35,4 +43,5 @@ $widget_sign = hash_hmac('sha256', $sign_data, $widget_key);
     });
     APWidget.render();
 </script>
-
+</body>
+</html>
