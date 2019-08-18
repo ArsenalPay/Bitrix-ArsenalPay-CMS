@@ -1,6 +1,7 @@
 <? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 	die();
 }
+
 /**
  * Шаблон обработчика платежной системы
  */
@@ -19,7 +20,7 @@ $widget_sign = hash_hmac('sha256', $sign_data, $widget_key);
 <html lang="ru">
 <head>
  <meta charset="utf-8">
- <title>Title</title>
+ <title>ArsenalPay - Оплата заказа</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 </head>
 <body>

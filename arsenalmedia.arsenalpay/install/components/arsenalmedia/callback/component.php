@@ -56,7 +56,7 @@ if (!checkSign($callbackParams, $paymentParams['CALLBACK_KEY'])) {
 //put params into vars
 $changeStatus     = $paymentParams['CHANGE_STATUS'] == 'Y' ? true : false;
 $currency         = "RUB";
-$shouldPay        = $payment->getSum();
+$shouldPay        = round($payment->getSum(),2);
 $arsenalPaidSum   = $payment->getSumPaid();
 $isOrderPaid      = $order->isPaid();
 $isArsenalPaid    = $payment->isPaid();
