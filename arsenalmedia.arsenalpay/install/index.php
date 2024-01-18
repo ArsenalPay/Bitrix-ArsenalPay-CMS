@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Main module file, install, uninstall
  */
@@ -10,19 +10,20 @@ use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
-class arsenalmedia_arsenalpay extends CModule {
-	var $MODULE_ID = 'arsenalmedia.arsenalpay';
-	var $PARTNER_NAME = "Arsenal Media";
-	var $PARTNER_URI = "https://arsenalpay.ru";
+class arsenalmedia_arsenalpay extends CModule
+{
+	public $MODULE_ID = 'arsenalmedia.arsenalpay';
+	public $PARTNER_NAME = "Arsenal Media";
+	public $PARTNER_URI = "https://arsenalpay.ru";
 
-	var $MODULE_VERSION;
-	var $MODULE_VERSION_DATE;
-	var $MODULE_NAME;
-	var $MODULE_DESCRIPTION;
+	public $MODULE_VERSION;
+	public $MODULE_VERSION_DATE;
+	public $MODULE_NAME;
+	public $MODULE_DESCRIPTION;
 
-	var $errors;
+	public $errors;
 
-	function arsenalmedia_arsenalpay() {
+	public function __construct() {
 		$this->MODULE_ID = 'arsenalmedia.arsenalpay';
 		$this->PARTNER_NAME = "Arsenal Media";
 		$this->PARTNER_URI = "https://arsenalpay.ru";
@@ -40,7 +41,7 @@ class arsenalmedia_arsenalpay extends CModule {
 		$this->MODULE_DESCRIPTION = Loc::getMessage('AM_MODULE_DESCRIPTION');
 	}
 
-	function InstallFiles($arParams = array()) {
+	public function InstallFiles($arParams = array()) {
 		CopyDirFiles(Loader::getDocumentRoot() . '/bitrix/modules/' . $this->MODULE_ID . '/install/components', Loader::getDocumentRoot() . "/bitrix/components", true, true);
 		CopyDirFiles(Loader::getDocumentRoot() . '/bitrix/modules/' . $this->MODULE_ID . '/install/sale_payment', Loader::getDocumentRoot() . "/bitrix/php_interface/include/sale_payment", true, true);
 		CopyDirFiles(Loader::getDocumentRoot() . '/bitrix/modules/' . $this->MODULE_ID . '/install/files', Loader::getDocumentRoot(), true, true);
@@ -49,7 +50,7 @@ class arsenalmedia_arsenalpay extends CModule {
 		return true;
 	}
 
-	function UnInstallFiles() {
+	public function UnInstallFiles() {
 		DeleteDirFilesEx("/bitrix/components/arsenalmedia");
 		DeleteDirFilesEx("/callback");
 		DeleteDirFilesEx("/bitrix/php_interface/include/sale_payment/arsenalmedia");
@@ -57,7 +58,7 @@ class arsenalmedia_arsenalpay extends CModule {
 		return true;
 	}
 
-	function DoInstall() {
+	public function DoInstall() {
 		Loader::includeModule("sale");
 		$this->AddStatusCode('AH');
 		$this->InstallFiles();
@@ -66,14 +67,14 @@ class arsenalmedia_arsenalpay extends CModule {
 		return true;
 	}
 
-	function DoUninstall() {
+	public function DoUninstall() {
 		UnRegisterModule($this->MODULE_ID);
 		$this->UnInstallFiles();
 
 		return true;
 	}
 
-	function AddStatusCode($ID) {
+	public function AddStatusCode($ID) {
 		$lang   = array();
 		$b = "sort";
 		$o = "asc";

@@ -1,4 +1,4 @@
-<?
+<?php
 global $MESS;
 
 $MESS["AM_CALLBACK_DB_FAIL"]        = "Произошел сбои при получении callback key из базы данных";

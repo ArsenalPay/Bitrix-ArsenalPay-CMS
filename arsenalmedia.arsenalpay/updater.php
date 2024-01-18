@@ -1,4 +1,4 @@
-<?
+<?php
 global $MESS;
 
 /** @var CUpdater $updater */
@@ -47,6 +47,3 @@ if (IsModuleInstalled('arsenalmedia.arsenalpay')) {
 
 
 }
-
-
-?>

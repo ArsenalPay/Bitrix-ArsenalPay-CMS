@@ -1,4 +1,4 @@
-<?
+<?php
 global $MESS;
 
 $MESS["AM_TITLE"]                    = "ArsenalPay";
